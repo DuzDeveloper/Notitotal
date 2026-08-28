@@ -1,25 +1,12 @@
 {
-  "version": 2,
-  "buildCommand": "npm install && npm run build",
-  "devCommand": "npm run dev",
-  "installCommand": "npm install",
-  "env": {
-    "FLASK_ENV": "production",
-    "DATABASE_PATH": "/tmp/news.db"
-  },
-  "rewrites": [
-    {
-      "source": "/api/(.*)",
-      "destination": "https://football-news-app-api.vercel.app/api/$1"
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "services": {
+    "frontend": {
+      "root": "frontend",
+      "framework": "vite"
     },
-    {
-      "source": "/(.*)",
-      "destination": "/frontend/$1"
-    }
-  ],
-  "functions": {
-    "backend/app.py": {
-      "runtime": "@vercel/python"
+    "backend": {
+      "root": "backend"
     }
   }
 }
