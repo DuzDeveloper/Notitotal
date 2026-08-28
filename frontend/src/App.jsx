@@ -17,7 +17,7 @@ function App() {
   const [sources, setSources] = useState(['Todos']);
   const [newsCount, setNewsCount] = useState(0);
 
-  const API_BASE = process.env.REACT_APP_API_URL || 'http://localhost:5000';
+  const API_BASE = 'https://notitotal-backend.onrender.com';
 
   // Cargar noticias al montar y cuando cambia el filtro
   useEffect(() => {
