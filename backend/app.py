@@ -176,10 +176,13 @@ def not_found(error):
 def server_error(error):
     return jsonify({'status': 'error', 'message': 'Error interno del servidor'}), 500
 
-if __name__ == '__main__':
-    # Primer scrape al iniciar
+# Ejecutar primer scrape al iniciar
+try:
     scrape_all_sources()
-    
-    # Modo de ejecución
+except Exception as e:
+    print(f"Error en primer scrape: {e}")
+
+# Para desarrollo local
+if __name__ == '__main__':
     debug_mode = os.getenv('FLASK_ENV', 'production') == 'development'
     app.run(host='0.0.0.0', port=5000, debug=debug_mode)
