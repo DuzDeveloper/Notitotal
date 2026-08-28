@@ -1,0 +1,35 @@
+{
+  "version": 2,
+  "buildCommand": "npm run build",
+  "functions": {
+    "backend/app.py": {
+      "runtime": "python3.9",
+      "handler": "app.app"
+    }
+  },
+  "rewrites": [
+    {
+      "source": "/api/(.*)",
+      "destination": "/backend/app.py"
+    },
+    {
+      "source": "/(.*)",
+      "destination": "/frontend/dist/$1"
+    }
+  ],
+  "headers": [
+    {
+      "source": "/(.*)",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=3600, s-maxage=3600"
+        }
+      ]
+    }
+  ],
+  "env": {
+    "FLASK_ENV": "production",
+    "DATABASE_PATH": "/tmp/news.db"
+  }
+}

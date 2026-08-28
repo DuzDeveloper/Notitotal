@@ -1,0 +1,29 @@
+/* Estilos para SourceList están en App.css bajo .column-1 y .source-btn */
+/* Archivo creado para referencia y futuros estilos específicos */
+
+.column-1 {
+  min-height: 300px;
+}
+
+.sources-container::-webkit-scrollbar {
+  width: 6px;
+}
+
+.sources-container::-webkit-scrollbar-track {
+  background: var(--bg-light);
+}
+
+.sources-container::-webkit-scrollbar-thumb {
+  background: var(--primary-color);
+  border-radius: 3px;
+}
+
+.sources-container::-webkit-scrollbar-thumb:hover {
+  background: #c0392b;
+}
+
+/* Firefox */
+.sources-container {
+  scrollbar-color: var(--primary-color) var(--bg-light);
+  scrollbar-width: thin;
+}

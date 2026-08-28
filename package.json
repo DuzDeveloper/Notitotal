@@ -1,0 +1,30 @@
+{
+  "name": "football-news-app",
+  "version": "1.0.0",
+  "description": "Aplicación web para recopilar y mostrar noticias de fútbol",
+  "private": true,
+  "scripts": {
+    "dev": "concurrently \"npm run dev:backend\" \"npm run dev:frontend\"",
+    "dev:backend": "cd backend && python app.py",
+    "dev:frontend": "cd frontend && npm install && npm run dev",
+    "build": "cd frontend && npm install && npm run build",
+    "start": "npm run dev",
+    "test": "cd backend && python test_api.py",
+    "docker:up": "docker-compose up",
+    "docker:down": "docker-compose down",
+    "docker:build": "docker-compose build"
+  },
+  "keywords": [
+    "football",
+    "news",
+    "scraping",
+    "react",
+    "flask",
+    "vercel"
+  ],
+  "author": "Tu nombre",
+  "license": "MIT",
+  "devDependencies": {
+    "concurrently": "^8.0.0"
+  }
+}

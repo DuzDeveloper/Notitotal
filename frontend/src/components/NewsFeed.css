@@ -1,0 +1,56 @@
+/* Estilos para NewsFeed están en App.css bajo .column-2 y .news-feed */
+/* Archivo creado para referencia y estilos específicos adicionales */
+
+.column-2 {
+  position: relative;
+}
+
+.news-feed {
+  scrollbar-color: var(--primary-color) var(--bg-light);
+  scrollbar-width: thin;
+}
+
+.news-feed::-webkit-scrollbar {
+  width: 8px;
+}
+
+.news-feed::-webkit-scrollbar-track {
+  background: var(--bg-light);
+}
+
+.news-feed::-webkit-scrollbar-thumb {
+  background: var(--primary-color);
+  border-radius: 4px;
+}
+
+.news-feed::-webkit-scrollbar-thumb:hover {
+  background: #c0392b;
+}
+
+/* Animación de entrada de tarjetas */
+.news-card {
+  animation: slideIn 0.3s ease-out;
+}
+
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateX(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+/* Efecto de carga */
+.news-feed.loading {
+  opacity: 0.6;
+  pointer-events: none;
+}
+
+/* Imagen responsiva */
+.news-image {
+  display: block;
+  background-color: var(--bg-light);
+}
