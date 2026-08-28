@@ -1,9 +1,10 @@
 import sys
 import os
-sys.path.insert(0, './backend')
 
-from backend.app import app
+# Agregar backend al path
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'backend'))
 
-# Para Vercel Serverless Function
-def handler(request):
-    return app(request)
+from app import app
+
+# Exportar para Vercel
+handler = app
