@@ -9,5 +9,15 @@
       "root": "backend",
       "entrypoint": "app.py"
     }
-  }
+  },
+  "routes": [
+    {
+      "src": "/api/(.*)",
+      "dest": "backend"
+    },
+    {
+      "src": "/(.*)",
+      "dest": "frontend"
+    }
+  ]
 }
