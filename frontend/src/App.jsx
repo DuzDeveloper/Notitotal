@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import './App.css';
+import '../keep-alive.js';  // Agregar esta línea
 import Header from './components/Header';
 import SourceList from './components/SourceList';
 import NewsFeed from './components/NewsFeed';
