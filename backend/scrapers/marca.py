@@ -96,3 +96,13 @@ def scrape_marca():
     except Exception as e:
         print(f"Error scraping Marca: {e}")
         return news_list
+
+from utils.content_extractor import get_article_content
+
+# En cada scraper, agregar:
+full_content = get_article_content(link) if link else ""
+if not full_content:
+    full_content = description
+
+# Y en news_dict:
+'content': full_content,  # ← CONTENIDO COMPLETO
