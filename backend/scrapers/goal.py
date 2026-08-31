@@ -93,3 +93,17 @@ def scrape_goal():
     except Exception as e:
         print(f"Error scraping Goal: {e}")
         return news_list
+
+from utils.text_cleaner import extract_plain_text
+
+# En la función scrape_goal(), antes de retornar:
+news_dict = {
+    'title': clean_title(title),
+    'description': description[:200],  # Primeros 200 caracteres
+    'content': extract_plain_text(full_article_text),  # ← SOLO TEXTO PURO
+    'image_url': image_url,
+    'source': 'Goal',
+    'source_url': link,
+    'author': 'Goal',
+    'published_at': published_at
+}
