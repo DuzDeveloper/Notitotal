@@ -96,14 +96,36 @@ def scrape_goal():
 
 from utils.text_cleaner import extract_plain_text
 
-# En la función scrape_goal(), antes de retornar:
-news_dict = {
-    'title': clean_title(title),
-    'description': description[:200],  # Primeros 200 caracteres
-    'content': extract_plain_text(full_article_text),  # ← SOLO TEXTO PURO
-    'image_url': image_url,
-    'source': 'Goal',
-    'source_url': link,
-    'author': 'Goal',
-    'published_at': published_at
-}
+from utils.content_extractor import get_article_content  # Agregar esto al inicio
+
+# En la parte donde creates news_dict, cambia:
+
+for article in articles:
+    try:
+        # ... código existente para extraer título, descripción, imagen, etc ...
+        
+        # AGREGÁ ESTO: Extraer contenido completo
+        full_content = ""
+        if link:
+            full_content = get_article_content(link)
+        
+        # Si no hay contenido, usar descripción
+        if not full_content:
+            full_content = description
+        
+        news_dict = {
+            'title': title,
+            'description': description[:200],  # Descripción breve
+            'content': full_content,  # ← CONTENIDO COMPLETO
+            'image_url': image_url,
+            'source': 'Goal',
+            'source_url': link,
+            'author': 'Goal',
+            'published_at': published_at
+        }
+        
+        news_list.append(news_dict)
+        
+    except Exception as e:
+        print(f"Error procesando artículo Goal: {e}")
+        continue
