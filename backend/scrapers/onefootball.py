@@ -42,7 +42,7 @@ def get_article_content(url, timeout=10):
                 content_text += text + "\n\n"
         
         content_text = re.sub(r'\n\n+', '\n\n', content_text)
-        return content_text[:2000] if content_text else ""
+        return content_text if content_text else ""
         
     except Exception as e:
         return ""
