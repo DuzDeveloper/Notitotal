@@ -23,11 +23,12 @@ def get_article_content_goal(url, timeout=10):
         
         soup = BeautifulSoup(response.content, 'html.parser')
         
-        # Remover scripts y styles
-        for element in soup(['script', 'style']):
+        for element in soup(['script', 'style', 'nav', 'footer', 'aside', 'iframe']):
             element.decompose()
         
-        # Buscar contenido
+        for element in soup.find_all(['a', 'div', 'span'], class_=re.compile('share|social|comment|follow', re.I)):
+            element.decompose()
+        
         article = soup.find('article')
         if not article:
             article = soup.find('main')
@@ -37,22 +38,21 @@ def get_article_content_goal(url, timeout=10):
         if not article:
             return ""
         
-        # Extraer párrafos
         content_text = ""
         paragraphs = article.find_all('p')
         
         for p in paragraphs:
             text = p.get_text(strip=True)
             if text and len(text) > 20:
-                content_text += text + "\n\n"
+                if not any(x in text.lower() for x in ['compartir', 'seguir', 'comentarios']):
+                    content_text += text + "\n\n"
         
-        # Limpiar espacios
         content_text = re.sub(r'\n\n+', '\n\n', content_text)
+        content_text = '\n'.join([line.strip() for line in content_text.split('\n') if line.strip()])
         
-        return content_text[:2000] if content_text else ""
+        return content_text if content_text else ""
         
     except Exception as e:
-        print(f"Error: {e}")
         return ""
 
 def scrape_goal():
@@ -76,7 +76,6 @@ def scrape_goal():
         
         for article in articles:
             try:
-                # Título
                 title_elem = article.find(['h2', 'h3', 'a'])
                 if not title_elem:
                     continue
@@ -85,21 +84,17 @@ def scrape_goal():
                 if not title or len(title) < 10:
                     continue
                 
-                # URL
                 link_elem = article.find('a', href=True)
                 link = link_elem.get('href', '') if link_elem else ''
                 if link and not link.startswith('http'):
                     link = urljoin('https://www.goal.com', link)
                 
-                # Descripción
                 desc_elem = article.find('p')
                 description = desc_elem.get_text(strip=True) if desc_elem else ""
                 
-                # Imagen
                 img_elem = article.find('img')
                 image_url = img_elem.get('src', '') if img_elem else ""
                 
-                # Contenido completo
                 full_content = get_article_content_goal(link) if link else ""
                 if not full_content:
                     full_content = description
