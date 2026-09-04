@@ -1,9 +1,9 @@
 /* ======================== HEADER ======================== */
 .header {
-  background: linear-gradient(135deg, #e74c3c, #c0392b);
+  background: linear-gradient(135deg, #1a3a52, #0f2238);
   color: white;
   padding: 15px 20px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
   position: sticky;
   top: 0;
   z-index: 100;
@@ -20,8 +20,14 @@
 .logo-section {
   display: flex;
   align-items: center;
-  gap: 20px;
+  gap: 12px;
   flex: 1;
+}
+
+.logo-image {
+  width: 50px;
+  height: 50px;
+  object-fit: contain;
 }
 
 .logo-section h1 {
@@ -29,6 +35,7 @@
   font-weight: bold;
   margin: 0;
   letter-spacing: 1px;
+  color: #fff;
 }
 
 .news-count {
@@ -49,7 +56,7 @@
 
 .btn-refresh,
 .btn-dark-mode {
-  background-color: rgba(255, 255, 255, 0.2);
+  background-color: rgba(255, 255, 255, 0.15);
   border: 2px solid rgba(255, 255, 255, 0.3);
   color: white;
   padding: 8px 16px;
@@ -65,7 +72,7 @@
 
 .btn-refresh:hover:not(:disabled),
 .btn-dark-mode:hover {
-  background-color: rgba(255, 255, 255, 0.3);
+  background-color: rgba(255, 255, 255, 0.25);
   border-color: white;
   transform: scale(1.05);
 }
