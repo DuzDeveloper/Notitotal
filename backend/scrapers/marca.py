@@ -23,21 +23,17 @@ def get_article_content(url, timeout=10):
         
         soup = BeautifulSoup(response.content, 'html.parser')
         
-        # Remover elementos no deseados
         for element in soup(['script', 'style', 'nav', 'footer', 'aside']):
             element.decompose()
         
-        # Remover botones de compartir, comentarios, etc
         for element in soup.find_all(['a', 'div', 'span'], class_=re.compile('share|social|comment|follow|telegram|whatsapp|facebook|twitter|mail', re.I)):
             element.decompose()
         
-        # Remover elementos comunes de Marca
         for element in soup.find_all(['div', 'span'], string=re.compile('Seguir|Compartir|Mostrar|comentarios', re.I)):
             parent = element.parent
             if parent:
                 parent.decompose()
         
-        # Buscar contenido
         article = soup.find('article')
         if not article:
             article = soup.find('div', class_=re.compile('content|body|article'))
@@ -47,23 +43,19 @@ def get_article_content(url, timeout=10):
         if not article:
             return ""
         
-        # Extraer solo párrafos del contenido
         content_text = ""
         paragraphs = article.find_all('p')
         
         for p in paragraphs:
             text = p.get_text(strip=True)
-            # Filtrar párrafos que son botones o controles
             if text and len(text) > 20:
-                # Ignorar texto de redes sociales
                 if not any(x in text.lower() for x in ['compartir', 'seguir', 'comentarios', 'mail', 'telegram', 'whatsapp', 'facebook', 'twitter']):
                     content_text += text + "\n\n"
         
-        # Limpiar espacios
         content_text = re.sub(r'\n\n+', '\n\n', content_text)
         content_text = '\n'.join([line.strip() for line in content_text.split('\n') if line.strip()])
         
-        return content_text[:2000] if content_text else ""
+        return content_text if content_text else ""
         
     except Exception as e:
         return ""
