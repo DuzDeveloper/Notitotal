@@ -6,8 +6,9 @@ function Header({ newsCount, onRefresh, onToggleDarkMode, onSearch, searchTerm, 
     <header className="header">
       <div className="header-top">
         <div className="logo-section">
-          <h1>⚽ Football News</h1>
-          <span className="news-count">NOTITOTAL: {newsCount}</span>
+          <img src="/logo.png" alt="Notitotal" className="logo-image" />
+          <h1>Notitotal</h1>
+          <span className="news-count">NOTICIAS: {newsCount}</span>
         </div>
 
         <div className="controls">
