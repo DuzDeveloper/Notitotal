@@ -1,13 +1,12 @@
 import React from 'react';
 import './Header.css';
-import logo from '../../../logo.png'; // Importar logo desde la raíz
 
 function Header({ newsCount, onRefresh, onToggleDarkMode, onSearch, searchTerm, loading }) {
   return (
     <header className="header">
       <div className="header-top">
         <div className="logo-section">
-          <img src={logo} alt="Notitotal" className="logo-image" />
+          <img src="/logo.png" alt="Notitotal" className="logo-image" />
           <h1>Notitotal</h1>
           <span className="news-count">NOTICIAS: {newsCount}</span>
         </div>
