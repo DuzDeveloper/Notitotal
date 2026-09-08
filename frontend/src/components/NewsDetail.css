@@ -68,7 +68,7 @@
 }
 
 .detail-content::-webkit-scrollbar-thumb:hover {
-  background: #c0392b;
+  background: #0052a3;
 }
 
 .detail-content {
@@ -78,18 +78,37 @@
 
 .detail-description {
   font-size: 14px;
-  line-height: 1.6;
+  line-height: 1.8;
   color: var(--text-dark);
   font-weight: 500;
+  margin-bottom: 12px;
 }
 
 .detail-text {
   font-size: 13px;
-  line-height: 1.6;
+  line-height: 1.8;
   color: var(--text-dark);
   white-space: pre-wrap;
   word-break: break-word;
   user-select: text;
+}
+
+/* Espacios entre párrafos */
+.detail-text p {
+  margin-bottom: 16px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+}
+
+.detail-text p:last-child {
+  margin-bottom: 0;
+  padding-bottom: 0;
+  border-bottom: none;
+}
+
+/* Espacios en el texto dividido por \n\n */
+.detail-text::before {
+  content: '';
 }
 
 .detail-text::selection {
@@ -112,8 +131,8 @@
 }
 
 .btn-copy:hover {
-  background-color: #c0392b;
-  box-shadow: 0 2px 8px rgba(231, 76, 60, 0.3);
+  background-color: #0052a3;
+  box-shadow: 0 2px 8px rgba(0, 102, 204, 0.3);
   transform: scale(1.05);
 }
 
@@ -137,8 +156,8 @@
 }
 
 .btn-original-link:hover {
-  background-color: #c0392b;
-  box-shadow: 0 4px 12px rgba(231, 76, 60, 0.3);
+  background-color: #0052a3;
+  box-shadow: 0 4px 12px rgba(0, 102, 204, 0.3);
 }
 
 .copy-hint {
@@ -175,11 +194,15 @@ body.dark-mode .detail-text {
 }
 
 body.dark-mode .detail-meta {
-  background: linear-gradient(135deg, rgba(231, 76, 60, 0.15), rgba(192, 57, 43, 0.15));
+  background: linear-gradient(135deg, rgba(0, 102, 204, 0.15), rgba(0, 82, 163, 0.15));
 }
 
 body.dark-mode .copy-hint {
-  background: linear-gradient(135deg, rgba(231, 76, 60, 0.15), rgba(192, 57, 43, 0.15));
+  background: linear-gradient(135deg, rgba(0, 102, 204, 0.15), rgba(0, 82, 163, 0.15));
+}
+
+body.dark-mode .detail-text p {
+  border-bottom-color: rgba(255, 255, 255, 0.1);
 }
 
 @media (max-width: 768px) {
@@ -194,5 +217,10 @@ body.dark-mode .copy-hint {
 
   .detail-title {
     margin-bottom: 10px;
+  }
+
+  .detail-text {
+    font-size: 12px;
+    line-height: 1.6;
   }
 }
