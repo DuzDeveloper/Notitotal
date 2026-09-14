@@ -6,150 +6,199 @@ import NewsFeed from './components/NewsFeed';
 import NewsDetail from './components/NewsDetail';
 
 function App() {
-  // Estados principales
+  const API_BASE = 'https://notitotal-backend.onrender.com';
+
   const [news, setNews] = useState([]);
   const [filteredNews, setFilteredNews] = useState([]);
-  const [selectedSource, setSelectedSource] = useState('Todos');
+  const [sources, setSources] = useState([]);
+  const [selectedSource, setSelectedSource] = useState('todos');
   const [selectedNews, setSelectedNews] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [darkMode, setDarkMode] = useState(localStorage.getItem('darkMode') === 'true');
   const [loading, setLoading] = useState(false);
-  const [sources, setSources] = useState(['Todos']);
-  const [newsCount, setNewsCount] = useState(0);
 
-  const API_BASE = 'https://notitotal-backend.onrender.com';
-
-  // Cargar noticias al montar y cuando cambia el filtro
-  useEffect(() => {
-    fetchNews();
-    fetchSources();
-    
-    // Refresh automático cada 2 minutos
-    const interval = setInterval(fetchNews, 120000);
-    return () => clearInterval(interval);
-  }, []);
-
-  // Aplicar filtros cuando cambien
-  useEffect(() => {
-    applyFilters();
-  }, [selectedSource, searchTerm, news]);
-
-  // Guardar preferencia de tema
-  useEffect(() => {
-    localStorage.setItem('darkMode', darkMode);
-    document.body.classList.toggle('dark-mode', darkMode);
-  }, [darkMode]);
-
-  // Fetch de noticias
-  const fetchNews = async () => {
-    setLoading(true);
+  // Cargar noticias desde la API
+  const fetchNews = async (source = 'all') => {
     try {
-      const url = new URL(`${API_BASE}/api/news`);
-      url.searchParams.append('source', selectedSource === 'Todos' ? 'all' : selectedSource);
-      
-      const response = await fetch(url);
+      setLoading(true);
+      const url = source && source !== 'todos' 
+        ? `${API_BASE}/api/news?source=${source}`
+        : `${API_BASE}/api/news?source=all`;
+
+      const response = await fetch(url, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
       const data = await response.json();
       
-      if (data.status === 'success') {
-        setNews(data.news);
-        setNewsCount(data.count);
-      }
+      // IMPORTANTE: Limpiar y establecer nuevas noticias
+      const newsList = Array.isArray(data.news) ? data.news : [];
+      setNews(newsList);
+      
+      // Filtrar según búsqueda actual
+      filterNews(newsList, searchTerm);
+      
     } catch (error) {
       console.error('Error fetching news:', error);
+      setNews([]);
+      setFilteredNews([]);
     } finally {
       setLoading(false);
     }
   };
 
-  // Fetch de fuentes
+  // Cargar fuentes disponibles
   const fetchSources = async () => {
     try {
-      const response = await fetch(`${API_BASE}/api/sources`);
-      const data = await response.json();
-      
-      if (data.status === 'success') {
-        setSources(data.sources);
+      const response = await fetch(`${API_BASE}/api/sources`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
       }
+
+      const data = await response.json();
+      const sourceList = Array.isArray(data.sources) ? data.sources : [];
+      setSources(sourceList);
+      
     } catch (error) {
       console.error('Error fetching sources:', error);
+      setSources([]);
     }
   };
 
-  // Aplicar filtros de búsqueda
-  const applyFilters = () => {
-    let filtered = [...news];
+  // Función para filtrar noticias
+  const filterNews = (newsArray = news, search = '') => {
+    let filtered = newsArray;
 
-    // Filtro por fuente
-    if (selectedSource !== 'Todos') {
-      filtered = filtered.filter(item => item.source === selectedSource);
+    // Filtrar por fuente
+    if (selectedSource && selectedSource !== 'todos') {
+      filtered = filtered.filter(item => 
+        item.source && item.source.toLowerCase() === selectedSource.toLowerCase()
+      );
     }
 
-    // Filtro por búsqueda
-    if (searchTerm) {
-      const searchLower = searchTerm.toLowerCase();
+    // Filtrar por búsqueda
+    if (search) {
+      const searchLower = search.toLowerCase();
       filtered = filtered.filter(item =>
-        item.title.toLowerCase().includes(searchLower) ||
-        item.description?.toLowerCase().includes(searchLower)
+        (item.title && item.title.toLowerCase().includes(searchLower)) ||
+        (item.description && item.description.toLowerCase().includes(searchLower))
       );
     }
 
     setFilteredNews(filtered);
   };
 
-  // Refresh manual
-  const handleRefresh = async () => {
-    setLoading(true);
-    try {
-      const response = await fetch(`${API_BASE}/api/refresh`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' }
-      });
-      
-      if (response.ok) {
-        await fetchNews();
-      }
-    } catch (error) {
-      console.error('Error refreshing news:', error);
-    } finally {
-      setLoading(false);
+  // Actualizar cuando cambia la fuente
+  useEffect(() => {
+    filterNews();
+  }, [selectedSource]);
+
+  // Actualizar cuando cambia la búsqueda
+  useEffect(() => {
+    filterNews(news, searchTerm);
+  }, [searchTerm]);
+
+  // Actualizar tema oscuro
+  useEffect(() => {
+    if (darkMode) {
+      document.body.classList.add('dark-mode');
+    } else {
+      document.body.classList.remove('dark-mode');
     }
+    localStorage.setItem('darkMode', darkMode);
+  }, [darkMode]);
+
+  // Cargar datos iniciales
+  useEffect(() => {
+    fetchSources();
+    fetchNews();
+
+    // Auto-refresh cada 10 minutos
+    const interval = setInterval(() => {
+      fetchNews();
+    }, 10 * 60 * 1000);
+
+    return () => clearInterval(interval);
+  }, []);
+
+  // Cuando hace refresh
+  const handleRefresh = async () => {
+    setSelectedNews(null);
+    await fetchNews();
+  };
+
+  // Manejar cambio de fuente
+  const handleSourceChange = (source) => {
+    setSelectedSource(source);
+    setSelectedNews(null);
+  };
+
+  // Manejar cambio de búsqueda
+  const handleSearch = (term) => {
+    setSearchTerm(term);
+    setSelectedNews(null);
+  };
+
+  // Manejar selección de noticia
+  const handleSelectNews = (newsItem) => {
+    setSelectedNews(newsItem);
   };
 
   return (
-    <div className={`app ${darkMode ? 'dark-mode' : 'light-mode'}`}>
+    <div className="app">
       <Header
-        newsCount={newsCount}
+        newsCount={filteredNews.length}
         onRefresh={handleRefresh}
         onToggleDarkMode={() => setDarkMode(!darkMode)}
-        onSearch={setSearchTerm}
+        onSearch={handleSearch}
         searchTerm={searchTerm}
         loading={loading}
       />
 
       <div className="main-container">
-        {/* Columna 1: Fuentes */}
-        <SourceList
-          sources={sources}
-          selectedSource={selectedSource}
-          onSourceSelect={(source) => {
-            setSelectedSource(source);
-            setSelectedNews(null);
-          }}
-        />
+        <div className="column column-1">
+          <div className="column-title">FUENTES</div>
+          <SourceList
+            sources={sources}
+            selectedSource={selectedSource}
+            onSourceChange={handleSourceChange}
+          />
+        </div>
 
-        {/* Columna 2: Feed de Noticias */}
-        <NewsFeed
-          news={filteredNews}
-          selectedNews={selectedNews}
-          onSelectNews={setSelectedNews}
-          loading={loading}
-        />
+        <div className="column column-2">
+          <div className="column-title">NOTICIAS ({filteredNews.length})</div>
+          <NewsFeed
+            news={filteredNews}
+            selectedNews={selectedNews}
+            onSelectNews={handleSelectNews}
+            loading={loading}
+          />
+        </div>
 
-        {/* Columna 3: Detalle de Noticia */}
-        <NewsDetail
-          news={selectedNews}
-          darkMode={darkMode}
-        />
+        <div className="column column-3">
+          {selectedNews ? (
+            <NewsDetail selectedNews={selectedNews} />
+          ) : (
+            <div className="empty-detail">
+              <p>AL DARLE CLICK A LA NOTICIA</p>
+              <p>SE MOSTRARA LA NOTICIA ACA EN SOLO TEXTO</p>
+              <p>(NO IMAGENES, VIDEOS, NI PUBLICIDADES)</p>
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );
