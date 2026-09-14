@@ -1,29 +1,46 @@
-/* Estilos para SourceList están en App.css bajo .column-1 y .source-btn */
-/* Archivo creado para referencia y futuros estilos específicos */
-
-.column-1 {
-  min-height: 300px;
-}
-
-.sources-container::-webkit-scrollbar {
-  width: 6px;
-}
-
-.sources-container::-webkit-scrollbar-track {
-  background: var(--bg-light);
-}
-
-.sources-container::-webkit-scrollbar-thumb {
-  background: var(--primary-color);
-  border-radius: 3px;
-}
-
-.sources-container::-webkit-scrollbar-thumb:hover {
-  background: #c0392b;
-}
-
-/* Firefox */
 .sources-container {
-  scrollbar-color: var(--primary-color) var(--bg-light);
-  scrollbar-width: thin;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 12px;
+  overflow-y: auto;
+  flex: 1;
+  max-height: calc(100vh - 200px);
+}
+
+.source-btn {
+  padding: 12px;
+  background-color: var(--bg-light);
+  border: 2px solid transparent;
+  border-radius: 6px;
+  color: var(--text-dark);
+  cursor: pointer;
+  font-weight: 500;
+  transition: all 0.3s ease;
+  text-align: left;
+  font-size: 13px;
+}
+
+.source-btn:hover {
+  background-color: var(--accent-blue);
+  color: white;
+  transform: translateX(5px);
+}
+
+.source-btn.active {
+  background-color: var(--accent-blue);
+  color: white;
+  border-color: var(--accent-blue);
+  font-weight: bold;
+}
+
+@media (max-width: 768px) {
+  .sources-container {
+    max-height: 150px;
+  }
+
+  .source-btn {
+    padding: 10px;
+    font-size: 12px;
+  }
 }
