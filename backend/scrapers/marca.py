@@ -7,6 +7,7 @@ import requests
 from bs4 import BeautifulSoup
 from datetime import datetime
 from urllib.parse import urljoin
+from utils.text_cleaner import clean_title, clean_description, clean_content
 import re
 
 def get_article_content(url, timeout=10):
@@ -113,7 +114,7 @@ def scrape_marca():
                     full_content = description
                 
                 news_dict = {
-                    'title': title,
+                    'title' = clean_title(title)
                     'description': description,
                     'content': full_content,
                     'image_url': image_url,
