@@ -8,6 +8,7 @@ from bs4 import BeautifulSoup
 from datetime import datetime
 from urllib.parse import urljoin
 import re
+from utils.text_cleaner import clean_title, clean_description, clean_content
 
 def get_article_content_goal(url, timeout=10):
     """Extrae contenido completo de artículo Goal.com"""
@@ -50,7 +51,7 @@ def get_article_content_goal(url, timeout=10):
         content_text = re.sub(r'\n\n+', '\n\n', content_text)
         content_text = '\n'.join([line.strip() for line in content_text.split('\n') if line.strip()])
         
-        return content_text if content_text else ""
+        return clean_content(content_text) if content_text else ""
         
     except Exception as e:
         return ""
@@ -80,7 +81,7 @@ def scrape_goal():
                 if not title_elem:
                     continue
                 
-                title = title_elem.get_text(strip=True)
+                title = clean_title(title_elem.get_text(strip=True))
                 if not title or len(title) < 10:
                     continue
                 
@@ -90,7 +91,7 @@ def scrape_goal():
                     link = urljoin('https://www.goal.com', link)
                 
                 desc_elem = article.find('p')
-                description = desc_elem.get_text(strip=True) if desc_elem else ""
+                description = clean_description(desc_elem.get_text(strip=True)) if desc_elem else ""
                 
                 img_elem = article.find('img')
                 image_url = img_elem.get('src', '') if img_elem else ""
