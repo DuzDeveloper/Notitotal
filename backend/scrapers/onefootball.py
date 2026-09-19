@@ -1,12 +1,15 @@
 """
-Scraper para OneFootball
-https://onefootball.com/es/inicio
-
-NOTA: OneFootball tiene protección anti-bot. Este scraper usa estrategias
-para evitar ser detectado como bot.
+Scraper para OneFootball usando Selenium
+Simula un navegador real para burlar protección anti-bot
 """
 
-import requests
+from selenium import webdriver
+from selenium.webdriver.common.by import By
+from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.support import expected_conditions as EC
+from selenium.webdriver.chrome.options import Options
+from webdriver_manager.chrome import ChromeDriverManager
+from selenium.webdriver.chrome.service import Service
 from bs4 import BeautifulSoup
 from datetime import datetime
 from urllib.parse import urljoin
@@ -14,56 +17,58 @@ import re
 import time
 from utils.text_cleaner import clean_title, clean_description, clean_content
 
-# Simuladores de navegador real
-HEADERS = {
-    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-    'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
-    'Accept-Language': 'es-ES,es;q=0.9',
-    'Accept-Encoding': 'gzip, deflate, br',
-    'Connection': 'keep-alive',
-    'Upgrade-Insecure-Requests': '1',
-    'Cache-Control': 'max-age=0',
-    'Referer': 'https://www.google.com/',
-    'DNT': '1'
-}
-
 def get_article_content(url, timeout=10):
-    """Extrae contenido de artículo de OneFootball"""
+    """Extrae contenido de artículo"""
     try:
-        time.sleep(1)  # Delay para no ser detectado como bot
-        response = requests.get(url, headers=HEADERS, timeout=timeout)
-        response.encoding = 'utf-8'
+        time.sleep(1)
         
-        if response.status_code != 200:
-            return ""
+        # Configurar Selenium
+        chrome_options = Options()
+        chrome_options.add_argument('--headless')
+        chrome_options.add_argument('--no-sandbox')
+        chrome_options.add_argument('--disable-dev-shm-usage')
+        chrome_options.add_argument('--disable-gpu')
+        chrome_options.add_argument('user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36')
         
-        soup = BeautifulSoup(response.content, 'html.parser')
+        service = Service(ChromeDriverManager().install())
+        driver = webdriver.Chrome(service=service, options=chrome_options)
         
-        # Remover elementos no deseados
-        for element in soup(['script', 'style', 'nav', 'footer', 'aside']):
-            element.decompose()
-        
-        # Buscar contenido
-        article = soup.find('article')
-        if not article:
-            article = soup.find('div', class_=re.compile('content|body|text', re.I))
-        if not article:
-            article = soup.body
-        
-        if not article:
-            return ""
-        
-        # Extraer párrafos
-        content_text = ""
-        paragraphs = article.find_all('p')
-        
-        for p in paragraphs:
-            text = p.get_text(strip=True)
-            if text and len(text) > 20:
-                content_text += text + "\n\n"
-        
-        content_text = re.sub(r'\n\n+', '\n\n', content_text)
-        return clean_content(content_text) if content_text else ""
+        try:
+            driver.get(url)
+            # Esperar a que cargue contenido
+            WebDriverWait(driver, 10).until(
+                EC.presence_of_all_elements_located((By.TAG_NAME, "p"))
+            )
+            
+            html = driver.page_source
+            soup = BeautifulSoup(html, 'html.parser')
+            
+            # Remover elementos no deseados
+            for element in soup(['script', 'style', 'nav', 'footer', 'aside']):
+                element.decompose()
+            
+            # Buscar contenido
+            article = soup.find('article')
+            if not article:
+                article = soup.body
+            
+            if not article:
+                return ""
+            
+            # Extraer párrafos
+            content_text = ""
+            paragraphs = article.find_all('p')
+            
+            for p in paragraphs:
+                text = p.get_text(strip=True)
+                if text and len(text) > 20:
+                    content_text += text + "\n\n"
+            
+            content_text = re.sub(r'\n\n+', '\n\n', content_text)
+            return clean_content(content_text) if content_text else ""
+            
+        finally:
+            driver.quit()
         
     except Exception as e:
         print(f"Error extrayendo contenido OneFootball: {e}")
@@ -71,58 +76,56 @@ def get_article_content(url, timeout=10):
 
 def scrape_onefootball():
     """
-    Scrape de OneFootball - noticias de fútbol
-    
-    NOTA: OneFootball tiene protección anti-bot. Si esto no funciona,
-    es porque han endurecido su protección. En ese caso, recomendamos:
-    - Usar Selenium/Playwright (requiere navegador)
-    - Usar API de terceros
-    - Remover OneFootball como fuente
+    Scrape de OneFootball usando Selenium
     """
     news_list = []
     
-    urls_to_try = [
-        'https://onefootball.com/es/inicio',
-        'https://onefootball.com/es/noticias',
-        'https://onefootball.com/es',
-    ]
-    
-    for url in urls_to_try:
+    try:
+        print("Iniciando Selenium para OneFootball...")
+        
+        # Configurar Selenium para headless
+        chrome_options = Options()
+        chrome_options.add_argument('--headless')
+        chrome_options.add_argument('--no-sandbox')
+        chrome_options.add_argument('--disable-dev-shm-usage')
+        chrome_options.add_argument('--disable-gpu')
+        chrome_options.add_argument('--window-size=1920,1080')
+        chrome_options.add_argument('user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36')
+        
+        service = Service(ChromeDriverManager().install())
+        driver = webdriver.Chrome(service=service, options=chrome_options)
+        
         try:
-            print(f"Intentando scrape de OneFootball: {url}")
+            url = 'https://onefootball.com/es/inicio'
+            print(f"Navegando a {url}...")
+            driver.get(url)
             
-            # Esperar para no ser detectado como bot
-            time.sleep(2)
+            # Esperar a que cargue
+            print("Esperando carga de elementos...")
+            WebDriverWait(driver, 15).until(
+                EC.presence_of_all_elements_located((By.TAG_NAME, "article"))
+            )
             
-            response = requests.get(url, headers=HEADERS, timeout=10)
-            response.encoding = 'utf-8'
+            # Scroll para cargar más noticias
+            print("Scrolling para cargar más contenido...")
+            for _ in range(3):
+                driver.execute_script("window.scrollBy(0, 500)")
+                time.sleep(2)
             
-            if response.status_code != 200:
-                print(f"Status {response.status_code} en {url}")
-                continue
+            # Obtener HTML renderizado
+            html = driver.page_source
+            soup = BeautifulSoup(html, 'html.parser')
             
-            soup = BeautifulSoup(response.content, 'html.parser')
+            # Buscar artículos
+            articles = soup.find_all('article', limit=30)
+            print(f"OneFootball - Encontrados {len(articles)} artículos")
             
-            # Estrategia 1: Buscar article tags
-            articles = soup.find_all('article', limit=20)
-            print(f"OneFootball - Encontrados {len(articles)} articles tags en {url}")
+            if not articles:
+                # Intenta buscar divs si no hay articles
+                articles = soup.find_all('div', class_=re.compile('article|news|card|story', re.I), limit=30)
+                print(f"OneFootball - Encontrados {len(articles)} divs alternativos")
             
-            # Estrategia 2: Buscar divs con clase article/news/story
-            if not articles or len(articles) < 3:
-                articles = soup.find_all('div', class_=re.compile(
-                    'article|news|story|item|card|post', re.I
-                ), limit=20)
-                print(f"OneFootball - Encontrados {len(articles)} divs con clase")
-            
-            # Estrategia 3: Buscar links a noticias
-            if not articles or len(articles) < 3:
-                links = soup.find_all('a', href=re.compile(
-                    '/es/noticias|/news|/noticia', re.I
-                ), limit=20)
-                articles = [link.parent for link in links if link.parent]
-                print(f"OneFootball - Encontrados {len(articles)} parents de links")
-            
-            # Procesar artículos encontrados
+            # Procesar artículos
             for idx, article in enumerate(articles):
                 try:
                     # Extraer título
@@ -144,9 +147,9 @@ def scrape_onefootball():
                         link = link_elem.get('href', '')
                     
                     if link and not link.startswith('http'):
-                        link = urljoin(url, link)
+                        link = urljoin('https://onefootball.com', link)
                     
-                    if not link:
+                    if not link or 'onefootball.com' not in link:
                         continue
                     
                     # Extraer descripción
@@ -186,13 +189,11 @@ def scrape_onefootball():
                     print(f"OneFootball - Error en artículo {idx}: {e}")
                     continue
             
-            # Si encontramos noticias, salir del loop de URLs
-            if news_list:
-                break
-                
-        except Exception as e:
-            print(f"OneFootball - Error scrapeando {url}: {e}")
-            continue
+        finally:
+            driver.quit()
+    
+    except Exception as e:
+        print(f"OneFootball - Error general: {e}")
     
     print(f"✓ OneFootball: {len(news_list)} noticias encontradas")
     return news_list
