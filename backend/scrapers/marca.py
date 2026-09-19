@@ -7,8 +7,8 @@ import requests
 from bs4 import BeautifulSoup
 from datetime import datetime
 from urllib.parse import urljoin
-from utils.text_cleaner import clean_title, clean_description, clean_content
 import re
+from utils.text_cleaner import clean_title, clean_description, clean_content
 
 def get_article_content(url, timeout=10):
     """Extrae contenido completo de artículo Marca limpio"""
@@ -27,14 +27,6 @@ def get_article_content(url, timeout=10):
         for element in soup(['script', 'style', 'nav', 'footer', 'aside']):
             element.decompose()
         
-        for element in soup.find_all(['a', 'div', 'span'], class_=re.compile('share|social|comment|follow|telegram|whatsapp|facebook|twitter|mail', re.I)):
-            element.decompose()
-        
-        for element in soup.find_all(['div', 'span'], string=re.compile('Seguir|Compartir|Mostrar|comentarios', re.I)):
-            parent = element.parent
-            if parent:
-                parent.decompose()
-        
         article = soup.find('article')
         if not article:
             article = soup.find('div', class_=re.compile('content|body|article'))
@@ -50,15 +42,14 @@ def get_article_content(url, timeout=10):
         for p in paragraphs:
             text = p.get_text(strip=True)
             if text and len(text) > 20:
-                if not any(x in text.lower() for x in ['compartir', 'seguir', 'comentarios', 'mail', 'telegram', 'whatsapp', 'facebook', 'twitter']):
+                if not any(x in text.lower() for x in ['compartir', 'seguir', 'comentarios', 'mail']):
                     content_text += text + "\n\n"
         
         content_text = re.sub(r'\n\n+', '\n\n', content_text)
-        content_text = '\n'.join([line.strip() for line in content_text.split('\n') if line.strip()])
-        
-        return content_text if content_text else ""
+        return clean_content(content_text) if content_text else ""
         
     except Exception as e:
+        print(f"Error extrayendo contenido Marca: {e}")
         return ""
 
 def scrape_marca():
@@ -75,46 +66,75 @@ def scrape_marca():
         response.encoding = 'utf-8'
         
         if response.status_code != 200:
+            print(f"Error: Status {response.status_code} en Marca")
             return news_list
         
         soup = BeautifulSoup(response.content, 'html.parser')
-        articles = soup.find_all(['article', 'div'], class_=re.compile('ue-c|ue-w|article'), limit=10)
         
-        for article in articles:
+        # Intentar múltiples estrategias para encontrar artículos
+        articles = []
+        
+        # Estrategia 1: buscar por article tags
+        articles = soup.find_all('article', limit=20)
+        print(f"Marca - Encontrados {len(articles)} articles tags")
+        
+        # Estrategia 2: Si no hay article tags, buscar divs con clase
+        if not articles:
+            articles = soup.find_all('div', class_=re.compile('ue-c|ue-w|card|news', re.I), limit=20)
+            print(f"Marca - Encontrados {len(articles)} divs con clase")
+        
+        # Estrategia 3: Buscar links
+        if not articles:
+            links = soup.find_all('a', href=re.compile('/futbol/'), limit=20)
+            articles = [link.parent for link in links if link.parent]
+            print(f"Marca - Encontrados {len(articles)} parents de links")
+        
+        for idx, article in enumerate(articles):
             try:
-                title_elem = article.find(['h2', 'h3', 'span', 'a'])
-                if not title_elem:
-                    continue
+                # Extraer título - intentar múltiples selectores
+                title = ""
+                title_elem = article.find(['h2', 'h3', 'h4', 'a'])
                 
-                title = title_elem.get_text(strip=True)
+                if title_elem:
+                    title = clean_title(title_elem.get_text(strip=True))
                 
                 if not title or len(title) < 10:
+                    print(f"Marca - Artículo {idx}: No title encontrado")
                     continue
                 
+                # Extraer URL
+                link = ""
                 link_elem = article.find('a', href=True)
-                link = link_elem.get('href', '') if link_elem else ''
+                if link_elem:
+                    link = link_elem.get('href', '')
+                
                 if link and not link.startswith('http'):
                     link = urljoin(url, link)
                 
+                # Extraer descripción
+                description = ""
                 desc_elem = article.find('p')
-                description = desc_elem.get_text(strip=True) if desc_elem else ""
+                if desc_elem:
+                    description = clean_description(desc_elem.get_text(strip=True))
                 
-                img_elem = article.find('img')
+                # Extraer imagen
                 image_url = ""
+                img_elem = article.find('img')
                 if img_elem:
                     image_url = img_elem.get('src', '') or img_elem.get('data-src', '')
                     if image_url and not image_url.startswith('http'):
                         image_url = urljoin('https://www.marca.com', image_url)
                 
-                time_elem = article.find('time') or article.find('span', class_=re.compile('time|fecha'))
-                published_at = time_elem.get_text(strip=True) if time_elem else datetime.now().isoformat()
+                # Extraer fecha
+                published_at = datetime.now().isoformat()
                 
+                # Extraer contenido
                 full_content = get_article_content(link) if link else ""
                 if not full_content:
                     full_content = description
                 
                 news_dict = {
-                    'title' = clean_title(title)
+                    'title': title,
                     'description': description,
                     'content': full_content,
                     'image_url': image_url,
@@ -125,13 +145,15 @@ def scrape_marca():
                 }
                 
                 news_list.append(news_dict)
+                print(f"Marca - Artículo {idx}: {title[:50]}...")
                 
             except Exception as e:
+                print(f"Marca - Error en artículo {idx}: {e}")
                 continue
         
-        print(f"Marca: {len(news_list)} noticias")
+        print(f"✓ Marca: {len(news_list)} noticias encontradas")
         return news_list
         
     except Exception as e:
-        print(f"Error Marca: {e}")
+        print(f"Error scraping Marca: {e}")
         return news_list
