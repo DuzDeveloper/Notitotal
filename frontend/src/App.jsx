@@ -18,12 +18,19 @@ function App() {
   const [loading, setLoading] = useState(false);
 
   // Cargar noticias desde la API
-  const fetchNews = async (source = 'all') => {
+   const fetchNews = async (source = 'all') => {
     try {
       setLoading(true);
-      const url = source && source !== 'todos' 
-        ? `${API_BASE}/api/news?source=${source}`
-        : `${API_BASE}/api/news?source=all`;
+      
+      // Construir URL correctamente
+      let url = `${API_BASE}/api/news`;
+      if (source && source !== 'todos' && source !== 'all') {
+        url += `?source=${encodeURIComponent(source)}`;
+      } else {
+        url += '?source=all';
+      }
+
+      console.log('Fetching from:', url); // Debug
 
       const response = await fetch(url, {
         method: 'GET',
@@ -33,17 +40,23 @@ function App() {
       });
 
       if (!response.ok) {
+        console.error('HTTP error! status:', response.status);
         throw new Error(`HTTP error! status: ${response.status}`);
       }
 
       const data = await response.json();
+      console.log('API Response:', data); // Debug
       
-      // IMPORTANTE: Limpiar y establecer nuevas noticias
-      const newsList = Array.isArray(data.news) ? data.news : [];
+      // Asegurarse de que news es un array
+      const newsList = Array.isArray(data.news) ? data.news : (data || []);
+      
+      console.log('Setting news array with', newsList.length, 'items'); // Debug
+      
       setNews(newsList);
+      setSelectedNews(null);
       
-      // Filtrar según búsqueda actual
-      filterNews(newsList, searchTerm);
+      // Filtrar con los nuevos datos
+      applyFilters(newsList, selectedSource, searchTerm);
       
     } catch (error) {
       console.error('Error fetching news:', error);
@@ -52,6 +65,36 @@ function App() {
     } finally {
       setLoading(false);
     }
+  };
+
+  // Nueva función para aplicar filtros
+  const applyFilters = (newsArray, sourceFilter = selectedSource, searchFilter = searchTerm) => {
+    let filtered = newsArray;
+
+    console.log('Applying filters - Total news:', newsArray.length);
+
+    // Filtrar por fuente
+    if (sourceFilter && sourceFilter !== 'todos') {
+      filtered = filtered.filter(item => {
+        const itemSource = item.source ? item.source.toLowerCase() : '';
+        const filterSource = sourceFilter.toLowerCase();
+        return itemSource === filterSource || itemSource.includes(filterSource);
+      });
+      console.log('After source filter:', filtered.length);
+    }
+
+    // Filtrar por búsqueda
+    if (searchFilter && searchFilter.trim()) {
+      const searchLower = searchFilter.toLowerCase();
+      filtered = filtered.filter(item =>
+        (item.title && item.title.toLowerCase().includes(searchLower)) ||
+        (item.description && item.description.toLowerCase().includes(searchLower))
+      );
+      console.log('After search filter:', filtered.length);
+    }
+
+    console.log('Final filtered count:', filtered.length);
+    setFilteredNews(filtered);
   };
 
   // Cargar fuentes disponibles
