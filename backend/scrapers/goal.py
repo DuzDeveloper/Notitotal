@@ -73,7 +73,7 @@ def scrape_goal():
             return news_list
         
         soup = BeautifulSoup(response.content, 'html.parser')
-        articles = soup.find_all('article', limit=10)
+        articles = soup.find_all('article', limit=20)
         
         for article in articles:
             try:
