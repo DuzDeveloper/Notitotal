@@ -18,11 +18,10 @@ function App() {
   const [loading, setLoading] = useState(false);
 
   // Cargar noticias desde la API
-   const fetchNews = async (source = 'all') => {
+  const fetchNews = async (source = 'all') => {
     try {
       setLoading(true);
       
-      // Construir URL correctamente
       let url = `${API_BASE}/api/news`;
       if (source && source !== 'todos' && source !== 'all') {
         url += `?source=${encodeURIComponent(source)}`;
@@ -30,7 +29,7 @@ function App() {
         url += '?source=all';
       }
 
-      console.log('Fetching from:', url); // Debug
+      console.log('Fetching from:', url);
 
       const response = await fetch(url, {
         method: 'GET',
@@ -45,17 +44,15 @@ function App() {
       }
 
       const data = await response.json();
-      console.log('API Response:', data); // Debug
+      console.log('API Response:', data);
       
-      // Asegurarse de que news es un array
       const newsList = Array.isArray(data.news) ? data.news : (data || []);
       
-      console.log('Setting news array with', newsList.length, 'items'); // Debug
+      console.log('Setting news array with', newsList.length, 'items');
       
       setNews(newsList);
       setSelectedNews(null);
       
-      // Filtrar con los nuevos datos
       applyFilters(newsList, selectedSource, searchTerm);
       
     } catch (error) {
@@ -67,8 +64,32 @@ function App() {
     }
   };
 
-  // Nueva función para aplicar filtros
-  const applyFilters = (newsArray, sourceFilter = selectedSource, searchFilter = searchTerm) => {
+  // Cargar fuentes disponibles
+  const fetchSources = async () => {
+    try {
+      const response = await fetch(`${API_BASE}/api/sources`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const data = await response.json();
+      const sourceList = Array.isArray(data.sources) ? data.sources : [];
+      setSources(sourceList);
+      
+    } catch (error) {
+      console.error('Error fetching sources:', error);
+      setSources([]);
+    }
+  };
+
+  // Función para aplicar filtros
+  const applyFilters = (newsArray, sourceFilter, searchFilter) => {
     let filtered = newsArray;
 
     console.log('Applying filters - Total news:', newsArray.length);
@@ -97,61 +118,14 @@ function App() {
     setFilteredNews(filtered);
   };
 
-  // Cargar fuentes disponibles
-  const fetchSources = async () => {
-    try {
-      const response = await fetch(`${API_BASE}/api/sources`, {
-        method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-      });
-
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-
-      const data = await response.json();
-      const sourceList = Array.isArray(data.sources) ? data.sources : [];
-      setSources(sourceList);
-      
-    } catch (error) {
-      console.error('Error fetching sources:', error);
-      setSources([]);
-    }
-  };
-
-  // Función para filtrar noticias
-  const filterNews = (newsArray = news, search = '') => {
-    let filtered = newsArray;
-
-    // Filtrar por fuente
-    if (selectedSource && selectedSource !== 'todos') {
-      filtered = filtered.filter(item => 
-        item.source && item.source.toLowerCase() === selectedSource.toLowerCase()
-      );
-    }
-
-    // Filtrar por búsqueda
-    if (search) {
-      const searchLower = search.toLowerCase();
-      filtered = filtered.filter(item =>
-        (item.title && item.title.toLowerCase().includes(searchLower)) ||
-        (item.description && item.description.toLowerCase().includes(searchLower))
-      );
-    }
-
-    setFilteredNews(filtered);
-  };
-
   // Actualizar cuando cambia la fuente
   useEffect(() => {
-    filterNews();
+    applyFilters(news, selectedSource, searchTerm);
   }, [selectedSource]);
 
   // Actualizar cuando cambia la búsqueda
   useEffect(() => {
-    filterNews(news, searchTerm);
+    applyFilters(news, selectedSource, searchTerm);
   }, [searchTerm]);
 
   // Actualizar tema oscuro
@@ -233,12 +207,6 @@ function App() {
 
         <div className="column column-3">
           <NewsDetail selectedNews={selectedNews} />
-        </div>
-          ) : (
-            <div className="empty-detail">
-              <p>VACIO</p>
-            </div>
-          )}
         </div>
       </div>
     </div>
