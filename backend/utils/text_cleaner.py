@@ -1,41 +1,64 @@
 """
-Utilidad para limpiar y extraer solo texto puro de HTML
+Utilidades para limpiar texto
 """
 
-from bs4 import BeautifulSoup
 import re
-
-def extract_plain_text(html_content):
-    """
-    Extrae solo texto puro de contenido HTML
-    Sin imágenes, videos, ni publicidades
-    """
-    if not html_content:
-        return ""
-    
-    try:
-        # Parsear HTML
-        soup = BeautifulSoup(html_content, 'html.parser')
-        
-        # Remover scripts, styles, y elementos no deseados
-        for script in soup(['script', 'style', 'nav', 'footer', 'aside']):
-            script.decompose()
-        
-        # Obtener solo texto
-        text = soup.get_text(separator='\n', strip=True)
-        
-        # Limpiar espacios en blanco excesivos
-        text = re.sub(r'\n\s*\n', '\n', text)  # Múltiples saltos de línea
-        text = re.sub(r' +', ' ', text)  # Múltiples espacios
-        
-        # Limitar a primeros 500 caracteres para evitar contenido muy largo
-        text = text[:500].strip()
-        
-        return text
-    except Exception as e:
-        print(f"Error extrayendo texto: {e}")
-        return html_content[:500] if html_content else ""
+import html
 
 def clean_title(title):
-    """Limpia el título de caracteres especiales"""
-    return title.strip() if title else ""
+    """Limpia y normaliza títulos"""
+    if not title:
+        return ""
+    
+    # Decodificar entidades HTML
+    title = html.unescape(title)
+    
+    # Remover saltos de línea y espacios múltiples
+    title = re.sub(r'\s+', ' ', title)
+    
+    # Remover caracteres especiales problemáticos
+    title = title.replace('\n', ' ')
+    title = title.replace('\r', ' ')
+    title = title.replace('\t', ' ')
+    
+    # Trim de espacios
+    title = title.strip()
+    
+    # Limitar a 200 caracteres máximo
+    if len(title) > 200:
+        title = title[:197] + '...'
+    
+    return title
+
+def clean_description(description):
+    """Limpia y normaliza descripciones"""
+    if not description:
+        return ""
+    
+    description = html.unescape(description)
+    description = re.sub(r'\s+', ' ', description)
+    description = description.replace('\n', ' ')
+    description = description.strip()
+    
+    if len(description) > 300:
+        description = description[:297] + '...'
+    
+    return description
+
+def clean_content(content):
+    """Limpia contenido extraído"""
+    if not content:
+        return ""
+    
+    content = html.unescape(content)
+    
+    # Remover múltiples saltos de línea
+    content = re.sub(r'\n\s*\n', '\n\n', content)
+    
+    # Remover espacios múltiples
+    content = re.sub(r' +', ' ', content)
+    
+    # Remover tabs
+    content = content.replace('\t', '')
+    
+    return content.strip()
