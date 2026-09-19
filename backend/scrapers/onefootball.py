@@ -7,6 +7,7 @@ import requests
 from bs4 import BeautifulSoup
 from datetime import datetime
 from urllib.parse import urljoin
+from utils.text_cleaner import clean_title, clean_description, clean_content
 import re
 
 def get_article_content(url, timeout=10):
