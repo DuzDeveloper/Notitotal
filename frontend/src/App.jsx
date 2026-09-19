@@ -232,13 +232,11 @@ function App() {
         </div>
 
         <div className="column column-3">
-          {selectedNews ? (
-            <NewsDetail selectedNews={selectedNews} />
+          <NewsDetail selectedNews={selectedNews} />
+        </div>
           ) : (
             <div className="empty-detail">
-              <p>AL DARLE CLICK A LA NOTICIA</p>
-              <p>SE MOSTRARA LA NOTICIA ACA EN SOLO TEXTO</p>
-              <p>(NO IMAGENES, VIDEOS, NI PUBLICIDADES)</p>
+              <p>VACIO</p>
             </div>
           )}
         </div>
