@@ -10,6 +10,8 @@ import os
 import sqlite3
 from threading import Thread
 import time
+import os
+import shutil
 
 # Importar SOLO Goal y Marca
 from scrapers.goal import scrape_goal
@@ -198,6 +200,32 @@ def stats():
     except:
         return jsonify({'error': 'Error'}), 500
 
+@app.route('/api/reset-db', methods=['POST'])
+def reset_db():
+    """Resetear la base de datos completamente - SOLO DESARROLLO"""
+    try:
+        # Eliminar archivo de BD
+        if os.path.exists(DB_PATH):
+            os.remove(DB_PATH)
+            print("✓ BD eliminada")
+        
+        # Recrear BD limpia
+        init_db()
+        print("✓ BD recrea nueva")
+        
+        # Limpiar variables globales
+        cache['news'] = []
+        cache['sources'] = ['Todos', 'Goal', 'Marca']
+        cache['last_update'] = None
+        
+        # Ejecutar scraping nuevo
+        scrape_all_sources()
+        
+        return jsonify({'status': 'BD reseteada y scrape completado'}), 200
+    except Exception as e:
+        print(f"Error: {e}")
+        return jsonify({'error': str(e)}), 500
+        
 if __name__ == '__main__':
     scrape_all_sources()
     app.run(host='0.0.0.0', port=5000, debug=False)
