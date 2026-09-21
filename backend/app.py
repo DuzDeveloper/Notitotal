@@ -91,24 +91,6 @@ def scrape_all_sources():
     except Exception as e:
         print(f"✗ Error Marca: {e}")
     
-    # Scrape OneFootball
-    try:
-        print("Scrapeando OneFootball...")
-        onefootball_news = scrape_onefootball()
-        all_news.extend(onefootball_news)
-        print(f"✓ OneFootball: {len(onefootball_news)} noticias")
-    except Exception as e:
-        print(f"✗ Error OneFootball: {e}")
-    
-    # Scrape Instagram
-    try:
-        print("Scrapeando Instagram...")
-        instagram_news = scrape_instagram()
-        all_news.extend(instagram_news)
-        print(f"✓ Instagram: {len(instagram_news)} noticias")
-    except Exception as e:
-        print(f"✗ Error Instagram: {e}")
-    
     print(f"\n📰 Total noticias extraídas: {len(all_news)}")
     
     # Guardar en BD
