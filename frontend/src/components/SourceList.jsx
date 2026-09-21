@@ -2,23 +2,22 @@ import React from 'react';
 import './SourceList.css';
 
 function SourceList({ sources, selectedSource, onSourceChange }) {
-  // Asegurarse que "Todos" esté al inicio
-  let sourceList = [];
+  // Las fuentes ya vienen limpias del backend (solo Goal y Marca)
+  // No hacer nada especial, solo mostrar lo que el backend envía
   
-  if (sources && sources.length > 0) {
-    // Si "Todos" ya está en la lista, no lo duplicar
-    if (!sources.includes('Todos')) {
-      sourceList = ['Todos', ...sources];
-    } else {
-      sourceList = sources;
-    }
-  } else {
-    sourceList = ['Todos'];
+  if (!sources || sources.length === 0) {
+    return (
+      <div className="sources-container">
+        <button className="source-btn active">Todos</button>
+        <button className="source-btn">Goal</button>
+        <button className="source-btn">Marca</button>
+      </div>
+    );
   }
 
   return (
     <div className="sources-container">
-      {sourceList.map((source) => (
+      {sources.map((source) => (
         <button
           key={source}
           className={`source-btn ${selectedSource === source || (selectedSource === 'todos' && source === 'Todos') ? 'active' : ''}`}

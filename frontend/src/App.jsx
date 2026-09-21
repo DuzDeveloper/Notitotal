@@ -65,6 +65,7 @@ function App() {
   };
 
   // Cargar fuentes disponibles
+  // Cargar fuentes disponibles
   const fetchSources = async () => {
     try {
       const response = await fetch(`${API_BASE}/api/sources`, {
@@ -79,12 +80,18 @@ function App() {
       }
 
       const data = await response.json();
-      const sourceList = Array.isArray(data.sources) ? data.sources : [];
+      console.log('Fuentes del API:', data.sources);
+      
+      // Las fuentes ya vienen limpias del backend
+      const sourceList = Array.isArray(data.sources) ? data.sources : ['Todos', 'Goal', 'Marca'];
+      console.log('Fuentes a mostrar:', sourceList);
+      
       setSources(sourceList);
       
     } catch (error) {
       console.error('Error fetching sources:', error);
-      setSources([]);
+      // Fallback solo a Goal y Marca
+      setSources(['Todos', 'Goal', 'Marca']);
     }
   };
 
