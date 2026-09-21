@@ -35,6 +35,10 @@ def init_db():
     """Inicializar base de datos"""
     conn = sqlite3.connect(DB_PATH)
     cursor = conn.cursor()
+    
+    # Eliminar tabla antigua si existe (para limpiar)
+    cursor.execute('DROP TABLE IF EXISTS news')
+    
     cursor.execute('''
         CREATE TABLE IF NOT EXISTS news (
             id INTEGER PRIMARY KEY,
@@ -216,7 +220,7 @@ def get_sources():
         
         return jsonify({'sources': sources}), 200
     except Exception as e:
-        return jsonify({'sources': ['Todos', 'Goal', 'Marca', 'OneFootball', 'Instagram (Fabrizio)'], 'error': str(e)}), 200
+        return jsonify({'sources': ['Todos', 'Goal', 'Marca'], 'error': str(e)}), 200
 
 @app.route('/api/refresh', methods=['POST'])
 def refresh():
