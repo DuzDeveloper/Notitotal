@@ -1,6 +1,6 @@
 """
-Flask API para Football News App
-Scraping en tiempo real sin dependencia de scheduler
+Flask API para Football News App - VERSIÓN SIMPLIFICADA
+Solo Goal y Marca
 """
 
 from flask import Flask, jsonify, request
@@ -11,23 +11,21 @@ import sqlite3
 from threading import Thread
 import time
 
-# Importar scrapers
+# Importar SOLO Goal y Marca
 from scrapers.goal import scrape_goal
 from scrapers.marca import scrape_marca
-from scrapers.onefootball import scrape_onefootball
-from scrapers.instagram_romano import scrape_instagram
 
 app = Flask(__name__)
 CORS(app)
 
 # Configuración
 DB_PATH = os.getenv('DATABASE_PATH', '/tmp/news.db')
-CACHE_DURATION = 300  # 5 minutos
+CACHE_DURATION = 300
 
 # Variables globales de caché
 cache = {
     'news': [],
-    'sources': [],
+    'sources': ['Todos', 'Goal', 'Marca'],
     'last_update': None
 }
 
@@ -35,9 +33,6 @@ def init_db():
     """Inicializar base de datos"""
     conn = sqlite3.connect(DB_PATH)
     cursor = conn.cursor()
-    
-    # Eliminar tabla antigua si existe (para limpiar)
-    cursor.execute('DROP TABLE IF EXISTS news')
     
     cursor.execute('''
         CREATE TABLE IF NOT EXISTS news (
@@ -65,12 +60,12 @@ def clean_old_news():
         cursor.execute('DELETE FROM news WHERE created_at < ?', (cutoff_time,))
         conn.commit()
         conn.close()
-        print(f"✓ Limpieza completada a las {datetime.now().isoformat()}")
+        print(f"✓ Limpieza completada")
     except Exception as e:
-        print(f"Error limpiando noticias: {e}")
+        print(f"Error limpiando: {e}")
 
 def scrape_all_sources():
-    """Ejecutar todos los scrapers"""
+    """Ejecutar SOLO Goal y Marca"""
     print(f"\n{'='*50}")
     print(f"🔄 Iniciando scrape a las {datetime.now().isoformat()}")
     print(f"{'='*50}")
@@ -95,7 +90,7 @@ def scrape_all_sources():
     except Exception as e:
         print(f"✗ Error Marca: {e}")
     
-    print(f"\n📰 Total noticias extraídas: {len(all_news)}")
+    print(f"\n📰 Total: {len(all_news)} noticias")
     
     # Guardar en BD
     if all_news:
@@ -120,74 +115,52 @@ def scrape_all_sources():
             
             conn.commit()
             conn.close()
-            print(f"✓ Noticias guardadas en BD")
+            print(f"✓ Guardadas en BD")
         except Exception as e:
-            print(f"✗ Error guardando en BD: {e}")
+            print(f"✗ Error BD: {e}")
     
-    # Limpiar noticias antiguas
     clean_old_news()
     
-    # Actualizar caché
     cache['last_update'] = datetime.now()
     cache['news'] = all_news
-    cache['sources'] = list(set([n.get('source', '') for n in all_news if n.get('source')]))
+    cache['sources'] = ['Todos', 'Goal', 'Marca']
     
     print(f"{'='*50}\n")
 
-def get_news_from_cache_or_db():
-    """Obtener noticias del caché o BD"""
-    try:
-        conn = sqlite3.connect(DB_PATH)
-        conn.row_factory = sqlite3.Row
-        cursor = conn.cursor()
-        
-        # Obtener últimas 50 noticias
-        cursor.execute('''
-            SELECT * FROM news 
-            ORDER BY created_at DESC 
-            LIMIT 50
-        ''')
-        
-        rows = cursor.fetchall()
-        conn.close()
-        
-        news = []
-        for row in rows:
-            news.append(dict(row))
-        
-        return news
-    except Exception as e:
-        print(f"Error leyendo BD: {e}")
-        return []
-
-# Inicializar BD
 init_db()
 
 # ==================== RUTAS ====================
 
 @app.route('/api/health', methods=['GET'])
 def health():
-    """Health check"""
     return jsonify({'status': 'ok', 'timestamp': datetime.now().isoformat()}), 200
 
 @app.route('/api/news', methods=['GET'])
 def get_news():
-    """Obtener noticias con filtros opcionales"""
+    """Obtener noticias"""
     source = request.args.get('source', 'all')
     search = request.args.get('search', '').lower()
     
-    # Trigger scraping si es necesario (cada 5 minutos)
+    # Trigger scraping si es necesario
     if cache['last_update'] is None or (datetime.now() - cache['last_update']).seconds > CACHE_DURATION:
-        print("📡 Cache expirado, ejecutando scraping...")
-        # Ejecutar en background para no bloquear
+        print("📡 Ejecutando scraping...")
         thread = Thread(target=scrape_all_sources, daemon=True)
         thread.start()
     
     # Obtener noticias
-    news = get_news_from_cache_or_db()
+    try:
+        conn = sqlite3.connect(DB_PATH)
+        conn.row_factory = sqlite3.Row
+        cursor = conn.cursor()
+        cursor.execute('SELECT * FROM news ORDER BY created_at DESC LIMIT 100')
+        rows = cursor.fetchall()
+        conn.close()
+        news = [dict(row) for row in rows]
+    except:
+        news = []
     
     # Filtrar por fuente
-    if source and source != 'all':
+    if source and source != 'all' and source != 'todos':
         news = [n for n in news if n.get('source', '').lower() == source.lower()]
     
     # Filtrar por búsqueda
@@ -196,85 +169,35 @@ def get_news():
                 search in n.get('title', '').lower() or 
                 search in n.get('description', '').lower()]
     
-    print(f"API /news - Source: {source}, Search: {search}, Total: {len(news)}")
-    
-    return jsonify({
-        'news': news,
-        'total': len(news),
-        'timestamp': datetime.now().isoformat()
-    }), 200
+    return jsonify({'news': news, 'total': len(news)}), 200
 
 @app.route('/api/sources', methods=['GET'])
 def get_sources():
-    """Obtener lista de fuentes disponibles"""
-    try:
-        conn = sqlite3.connect(DB_PATH)
-        cursor = conn.cursor()
-        cursor.execute('SELECT DISTINCT source FROM news ORDER BY source')
-        sources = [row[0] for row in cursor.fetchall()]
-        conn.close()
-        
-        # Agregar "Todos" al inicio
-        if sources and 'Todos' not in sources:
-            sources = ['Todos'] + sources
-        
-        return jsonify({'sources': sources}), 200
-    except Exception as e:
-        return jsonify({'sources': ['Todos', 'Goal', 'Marca'], 'error': str(e)}), 200
+    """Obtener SOLO Goal y Marca"""
+    return jsonify({'sources': ['Todos', 'Goal', 'Marca']}), 200
 
-        scrape_all_sources()
-        
-        return jsonify({'status': 'BD reseteada completamente'}), 200
-    except Exception as e:
-        return jsonify({'error': str(e)}), 500
-        
 @app.route('/api/refresh', methods=['POST'])
 def refresh():
-    """Forzar actualización de noticias"""
-    print("📡 Refresh forzado solicitado")
+    """Forzar actualización"""
     thread = Thread(target=scrape_all_sources, daemon=True)
     thread.start()
     return jsonify({'status': 'Scraping iniciado...'}), 202
 
 @app.route('/api/stats', methods=['GET'])
 def stats():
-    """Estadísticas de la aplicación"""
+    """Estadísticas"""
     try:
         conn = sqlite3.connect(DB_PATH)
         cursor = conn.cursor()
-        
         cursor.execute('SELECT COUNT(*) FROM news')
         total = cursor.fetchone()[0]
-        
         cursor.execute('SELECT source, COUNT(*) as count FROM news GROUP BY source')
         sources_stats = dict(cursor.fetchall())
-        
         conn.close()
-        
-        return jsonify({
-            'total_news': total,
-            'sources': sources_stats,
-            'last_update': cache['last_update'].isoformat() if cache['last_update'] else None
-        }), 200
-    except Exception as e:
-        return jsonify({'error': str(e)}), 500
+        return jsonify({'total_news': total, 'sources': sources_stats}), 200
+    except:
+        return jsonify({'error': 'Error'}), 500
 
-@app.route('/api/cleanup', methods=['POST'])
-def cleanup():
-    """Limpiar noticias antiguas"""
-    clean_old_news()
-    return jsonify({'status': 'Limpieza completada'}), 200
-
-@app.errorhandler(404)
-def not_found(error):
-    return jsonify({'error': 'Endpoint no encontrado'}), 404
-
-@app.errorhandler(500)
-def server_error(error):
-    return jsonify({'error': 'Error interno del servidor'}), 500
-
-# Ejecutar scraping inicial al iniciar
 if __name__ == '__main__':
-    print("🚀 Iniciando Football News API...")
     scrape_all_sources()
     app.run(host='0.0.0.0', port=5000, debug=False)
