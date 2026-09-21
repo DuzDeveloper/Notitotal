@@ -272,3 +272,26 @@ if __name__ == '__main__':
     print("🚀 Iniciando Football News API...")
     scrape_all_sources()
     app.run(host='0.0.0.0', port=5000, debug=False)
+
+@app.route('/api/reset', methods=['POST'])
+def reset():
+    """Resetear toda la base de datos - SOLO PARA DESARROLLO"""
+    try:
+        # Eliminar BD completamente
+        if os.path.exists(DB_PATH):
+            os.remove(DB_PATH)
+        
+        # Recrear BD limpia
+        init_db()
+        
+        # Limpiar caché
+        cache['news'] = []
+        cache['sources'] = ['Todos', 'Goal', 'Marca']
+        cache['last_update'] = None
+        
+        # Ejecutar scraping nuevo
+        scrape_all_sources()
+        
+        return jsonify({'status': 'BD reseteada completamente'}), 200
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
